@@ -8,91 +8,59 @@ const {
   generateMarkupRemote,
 } = require("./generateMarkup");
 
-require('dotenv').config(); // .env faylini yuklash
+require("dotenv").config();
 
-// Muhit o'zgaruvchilarini tekshirish
-const checkEnvVariables = () => {
-  const requiredVariables = ["NAME", "PIC"];
-  requiredVariables.forEach((variable) => {
-    if (!process.env[variable]) {
-      console.error(`Please specify ${variable} in environment.`);
-      process.exit(1); // Dasturdan chiqish
-    }
-  });
-  
-  if (!process.env.SCROLL_MSG) {
-    console.warn("SCROLL_MSG is not specified, proceeding without it.");
-  }
-};
-
-checkEnvVariables(); // O'zgaruvchilarni tekshirish
+if (!process.env.NAME) throw new Error("Iltimos, muhitda NAME ni ko'rsating.");
+if (!process.env.PIC) throw new Error("Iltimos, muhitda PIC ni ko'rsating.");
 
 const picPath = process.env.PIC;
 const msgPath = process.env.SCROLL_MSG;
 
-// Local initialization
+//Local initialization
 const setLocalData = async () => {
   try {
     const pic = path.join(__dirname, "../local/", picPath);
     let markup = "";
-    
     if (msgPath) {
       const text = fs.readFileSync(path.join(__dirname, "../local/", msgPath), {
         encoding: "utf-8",
       });
       markup = generateMarkupLocal(text);
     }
-    
     await setPic(pic);
     genIndex(markup);
-    console.log("Local data set successfully.");
   } catch (e) {
-    console.error("Error in setLocalData:", e.message);
-    process.exit(1); // Dasturdan chiqish
+    throw new Error(e.message);
   }
 };
 
-const setRemoteData = async () => {
-  try {
-    console.log("Fetching image from:", picPath);
-    let res = await axios.get(picPath, {
-      responseType: "arraybuffer",
-    });
-    const pic = res.data;
-    let markup = "";
-    
-    if (msgPath) {
-      const article = msgPath.split("/").pop();
-      console.log("Fetching message from:", article);
-      res = await axios.get(
-        `https://api.telegra.ph/getPage/${article}?return_content=true`
-      );
+// setRemoteData funksiyasini olib tashladik
+// const setRemoteData = async () => {
+//   try {
+//     let res = await axios.get(picPath, {
+//       responseType: "arraybuffer",
+//     });
+//     const pic = res.data;
+//     let markup = "";
+//     if (msgPath) {
+//       const article = msgPath.split("/").pop();
+//       res = await axios.get(
+//         `https://api.telegra.ph/getPage/${article}?return_content=true`
+//       );
+//       const { content } = res.data.result;
+//       markup = content.reduce(
+//         (string, node) => string + generateMarkupRemote(node),
+//         ""
+//       );
+//     }
+//     await setPic(pic);
+//     genIndex(markup);
+//   } catch (e) {
+//     console.error("Xato yuz berdi:", e); // Xatolik haqida qo'shimcha ma'lumot
+//     throw new Error(e.message || "Noma'lum xato"); // Xatolik haqida aniqroq ma'lumot
+//   }
+// };
 
-      if (!res.data || !res.data.result) {
-        throw new Error("Failed to fetch content from Telegra.ph");
-      }
-
-      const { content } = res.data.result;
-      markup = content.reduce(
-        (string, node) => string + generateMarkupRemote(node),
-        ""
-      );
-    }
-    
-    await setPic(pic);
-    genIndex(markup);
-    console.log("Remote data set successfully.");
-  } catch (e) {
-    console.error("Error in setRemoteData:", e.message);
-    process.exit(1);
-  }
-};
-
-// Vercel muhitida ishlatish
-if (process.argv[2] === "--local") {
-  setLocalData();
-} else if (process.argv[2] === "--remote") {
-  setRemoteData();
-} else {
-  console.log("Fetch mode not specified. Use '--local' or '--remote'.");
-}
+if (process.argv[2] === "--local") setLocalData();
+// else if (process.argv[2] === "--remote") setRemoteData(); // Bu qatorni olib tashladik
+else console.log("Fetch mode not specified.");
