@@ -10,8 +10,19 @@ const {
 
 require('dotenv').config(); // .env faylini yuklash
 
-if (!process.env.NAME) throw new Error("Please specify NAME in environment.");
-if (!process.env.PIC) throw new Error("Please specify PIC in environment.");
+// Muhit o'zgaruvchilarini tekshirish
+const checkEnvVariables = () => {
+  if (!process.env.NAME) {
+    console.error("Please specify NAME in environment.");
+    process.exit(1); // Dasturdan chiqish
+  }
+  if (!process.env.PIC) {
+    console.error("Please specify PIC in environment.");
+    process.exit(1); // Dasturdan chiqish
+  }
+};
+
+checkEnvVariables(); // O'zgaruvchilarni tekshirish
 
 const picPath = process.env.PIC;
 const msgPath = process.env.SCROLL_MSG;
@@ -30,7 +41,7 @@ const setLocalData = async () => {
     await setPic(pic);
     genIndex(markup);
   } catch (e) {
-    throw new Error(e.message);
+    console.error("Error in setLocalData:", e.message);
   }
 };
 
@@ -56,10 +67,11 @@ const setRemoteData = async () => {
     await setPic(pic);
     genIndex(markup);
   } catch (e) {
-    throw new Error(e.message);
+    console.error("Error in setRemoteData:", e.message);
   }
 };
 
+// Vercelda ishga tushirish
 if (process.argv[2] === "--local") setLocalData();
 else if (process.argv[2] === "--remote") setRemoteData();
 else console.log("Fetch mode not specified.");
