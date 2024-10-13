@@ -55,6 +55,7 @@ const setLocalData = async () => {
 // Remote initialization
 const setRemoteData = async () => {
   try {
+    console.log("Fetching image from:", picPath); // URL ni ko'rsatish
     let res = await axios.get(picPath, {
       responseType: "arraybuffer",
     });
@@ -63,9 +64,16 @@ const setRemoteData = async () => {
     
     if (msgPath) {
       const article = msgPath.split("/").pop();
+      console.log("Fetching message from:", article); // Xabarni olish
       res = await axios.get(
         `https://api.telegra.ph/getPage/${article}?return_content=true`
       );
+
+      // Xatolikni tekshirish
+      if (!res.data || !res.data.result) {
+        throw new Error("Failed to fetch content from Telegra.ph");
+      }
+
       const { content } = res.data.result;
       markup = content.reduce(
         (string, node) => string + generateMarkupRemote(node),
@@ -77,7 +85,7 @@ const setRemoteData = async () => {
     genIndex(markup);
     console.log("Remote data set successfully.");
   } catch (e) {
-    console.error("Error in setRemoteData:", e.message);
+    console.error("Error in setRemoteData:", e.message); // Xatolik haqida ma'lumot
     process.exit(1); // Dasturdan chiqish
   }
 };
